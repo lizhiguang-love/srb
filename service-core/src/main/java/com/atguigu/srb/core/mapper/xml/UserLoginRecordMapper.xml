@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.atguigu.srb.core.mapper.UserLoginRecordMapper">
+    <resultMap id="baseResultMap" type="com.atguigu.srb.core.pojo.entity.UserLoginRecord">
+        <id property="id" column="id" />
+        <result property="userId" column="user_id"/>
+        <result property="ip" column="ip"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="deleted" column="is_deleted"/>
+    </resultMap>
+    <select id="listTop50" parameterType="long"  resultMap="baseResultMap">
+        select * from user_login_record where user_id=#{userId} order by update_time desc limit 50
+    </select>
+</mapper>
