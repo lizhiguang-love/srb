@@ -10,7 +10,6 @@ import org.springframework.scheduling.annotation.EnableAsync;
 public class ServiceCoreApplication {
 
     public static void main(String[] args) {
-        System.out.println("呵呵");
         SpringApplication.run(ServiceCoreApplication.class, args);
     }
 }
