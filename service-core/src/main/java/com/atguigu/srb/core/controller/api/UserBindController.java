@@ -47,7 +47,8 @@ public class UserBindController {
     }
     @ApiOperation("账号绑定异步回调")
     @PostMapping("/notify")
-    public String callback(HttpServletRequest request){
+    public String notify(HttpServletRequest request){
+        System.out.println("进入到方法中了");
         Map<String, Object> paramMap = RequestHelper.switchMap(request.getParameterMap());
         log.info("异步回调接口参数--->"+ JSON.toJSONString(paramMap));
         //先校验签名确认用户是否被修改

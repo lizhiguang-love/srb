@@ -88,17 +88,29 @@ public class UserBindServiceImpl extends ServiceImpl<UserBindMapper, UserBind> i
         QueryWrapper<UserBind> userBindQueryWrapper = new QueryWrapper<>();
         userBindQueryWrapper.eq("user_id",userId);
         UserBind userBind = userBindMapper.selectOne(userBindQueryWrapper);
+
         userBind.setBindCode(bindCode);
         userBind.setStatus(UserBindEnum.BIND_OK.getStatus());
         userBindMapper.updateById(userBind);
-        //更新userInfo账户数据
-        QueryWrapper<UserInfo> userInfoQueryWrapper = new QueryWrapper<>();
-        userInfoQueryWrapper.eq("id",userId);
-        UserInfo userInfo = userInfoMapper.selectOne(userInfoQueryWrapper);
-        userInfo.setNickName(userBind.getName());
-        userInfo.setBindStatus(UserBindEnum.BIND_OK.getStatus());
+        //更新用户表
+        //获取手机号,因为手机号在user_info表中是唯一存在的，一个手机号只会被注册一次
+        String mobile = userBind.getMobile();
+        QueryWrapper<UserInfo> wrapper = new QueryWrapper<>();
+        wrapper.eq("mobile",mobile);
+        UserInfo userInfo = userInfoMapper.selectOne(wrapper);
+        userInfo.setBindCode(bindCode);
+        userInfo.setName(userBind.getName());
         userInfo.setIdCard(userBind.getIdCard());
+        userInfo.setBindStatus(UserBindEnum.BIND_OK.getStatus());
         userInfoMapper.updateById(userInfo);
+    }
+
+    @Override
+    public String getBindCodeByUserId(Long userId) {
+        QueryWrapper<UserBind> userBindQueryWrapper = new QueryWrapper<>();
+        userBindQueryWrapper.eq("user_id", userId);
+        UserBind userBind = baseMapper.selectOne(userBindQueryWrapper);
+        return userBind.getBindCode();
     }
 
 

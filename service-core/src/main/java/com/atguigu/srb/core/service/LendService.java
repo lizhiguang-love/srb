@@ -6,6 +6,7 @@ import com.atguigu.srb.core.pojo.vo.BorrowInfoApprovalVO;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
 
+import java.math.BigDecimal;
 import java.util.Map;
 
 /**
@@ -23,4 +24,6 @@ public interface LendService extends IService<Lend> {
     IPage<Lend> selectList(long page,long limit);
 
     Map<String, Object> getLendDetail(Long id);
+
+    BigDecimal getInterestCount(BigDecimal invest, BigDecimal yearRate, Integer totalmonth, Integer returnMethod);
 }

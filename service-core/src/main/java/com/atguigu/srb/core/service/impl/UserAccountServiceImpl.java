@@ -4,14 +4,17 @@ import com.atguigu.srb.core.enums.TransTypeEnum;
 import com.atguigu.srb.core.hfb.FormHelper;
 import com.atguigu.srb.core.hfb.HfbConst;
 import com.atguigu.srb.core.hfb.RequestHelper;
+import com.atguigu.srb.core.mapper.UserBindMapper;
 import com.atguigu.srb.core.mapper.UserInfoMapper;
 import com.atguigu.srb.core.pojo.bo.TransFlowBO;
 import com.atguigu.srb.core.pojo.entity.UserAccount;
 import com.atguigu.srb.core.mapper.UserAccountMapper;
+import com.atguigu.srb.core.pojo.entity.UserBind;
 import com.atguigu.srb.core.pojo.entity.UserInfo;
 import com.atguigu.srb.core.service.TransFlowService;
 import com.atguigu.srb.core.service.UserAccountService;
 import com.atguigu.srb.core.util.LendNoUtils;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +36,9 @@ import java.util.Map;
 public class UserAccountServiceImpl extends ServiceImpl<UserAccountMapper, UserAccount> implements UserAccountService {
     @Resource
     private UserInfoMapper userInfoMapper;
+
+    @Resource
+    private UserBindMapper userBindMapper;
 
     @Resource
     private TransFlowService transFlowService;
@@ -71,7 +77,25 @@ public class UserAccountServiceImpl extends ServiceImpl<UserAccountMapper, UserA
         //账户处理
         String bindCode = (String)paramMap.get("bindCode");
         String chargeAmt = (String)paramMap.get("chargeAmt");
-        baseMapper.updateAccount(bindCode, new BigDecimal(chargeAmt), new BigDecimal(0));
+
+        QueryWrapper<UserBind> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("bind_code",bindCode);
+        UserBind userBind = userBindMapper.selectOne(queryWrapper);
+        Long userId = userBind.getUserId();
+
+        QueryWrapper<UserAccount> userAccountQueryWrapper = new QueryWrapper<>();
+        userAccountQueryWrapper.eq("user_id",userId);
+        UserAccount userAccount = baseMapper.selectOne(userAccountQueryWrapper);
+        if (userAccount == null){
+            UserAccount account = new UserAccount();
+            account.setUserId(userId);
+            account.setAmount(new BigDecimal(chargeAmt));
+            account.setFreezeAmount(new BigDecimal(0));
+            baseMapper.insert(account);
+        }else {
+            baseMapper.updateAccount(bindCode, new BigDecimal(chargeAmt), new BigDecimal(0));
+        }
+
 
         //记录账户流水
         TransFlowBO transFlowBO = new TransFlowBO(
@@ -82,5 +106,14 @@ public class UserAccountServiceImpl extends ServiceImpl<UserAccountMapper, UserA
                 "充值啦");
         transFlowService.saveTransFlow(transFlowBO);
         return "success";
+    }
+
+    @Override
+    public BigDecimal getAccount(Long userId) {
+        QueryWrapper<UserAccount> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("user_id", userId);
+        UserAccount userAccount = baseMapper.selectOne(queryWrapper);
+        return userAccount.getAmount();
+
     }
 }

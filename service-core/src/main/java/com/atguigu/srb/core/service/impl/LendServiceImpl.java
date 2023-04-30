@@ -1,6 +1,7 @@
 package com.atguigu.srb.core.service.impl;
 
 import com.atguigu.srb.core.enums.LendStatusEnum;
+import com.atguigu.srb.core.enums.ReturnMethodEnum;
 import com.atguigu.srb.core.mapper.BorrowerMapper;
 import com.atguigu.srb.core.pojo.entity.BorrowInfo;
 import com.atguigu.srb.core.pojo.entity.Borrower;
@@ -11,7 +12,7 @@ import com.atguigu.srb.core.pojo.vo.BorrowerDetailVO;
 import com.atguigu.srb.core.service.BorrowerService;
 import com.atguigu.srb.core.service.DictService;
 import com.atguigu.srb.core.service.LendService;
-import com.atguigu.srb.core.util.LendNoUtils;
+import com.atguigu.srb.core.util.*;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -119,5 +120,20 @@ public class LendServiceImpl extends ServiceImpl<LendMapper, Lend> implements Le
         result.put("lend", lend);
         result.put("borrower", borrowerDetailVO);
         return result;
+    }
+
+    @Override
+    public BigDecimal getInterestCount(BigDecimal invest, BigDecimal yearRate, Integer totalmonth, Integer returnMethod) {
+        BigDecimal interestCount;
+        if(returnMethod.intValue() == ReturnMethodEnum.ONE.getMethod()){
+            interestCount = Amount1Helper.getInterestCount(invest, yearRate, totalmonth);
+        }else if(returnMethod.intValue() == ReturnMethodEnum.TWO.getMethod()){
+            interestCount = Amount2Helper.getInterestCount(invest, yearRate, totalmonth);
+        }else if(returnMethod.intValue() == ReturnMethodEnum.THREE.getMethod()){
+            interestCount = Amount3Helper.getInterestCount(invest, yearRate, totalmonth);
+        }else{
+            interestCount = Amount4Helper.getInterestCount(invest, yearRate, totalmonth);
+        }
+        return interestCount;
     }
 }

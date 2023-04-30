@@ -19,4 +19,6 @@ public interface UserAccountMapper extends BaseMapper<UserAccount> {
             @Param("bindCode")String bindCode,
             @Param("amount") BigDecimal amount,
             @Param("freezeAmount")BigDecimal freezeAmount);
+
+    UserAccount getAccount(@Param("bindCode")String bindCode);
 }
