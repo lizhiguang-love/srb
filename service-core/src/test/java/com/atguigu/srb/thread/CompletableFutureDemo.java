@@ -1,5 +1,7 @@
 package com.atguigu.srb.thread;
 
+import lombok.Getter;
+
 import java.util.concurrent.*;
 
 public class CompletableFutureDemo {
@@ -12,3 +14,4 @@ public class CompletableFutureDemo {
         },threadPool);
     }
 }
+

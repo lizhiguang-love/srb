@@ -193,6 +193,16 @@ public class LendItemServiceImpl extends ServiceImpl<LendItemMapper, LendItem> i
         return baseMapper.selectList(lendItemQueryWrapper);
     }
 
+    @Override
+    public List<LendItem> selectByLendId(Long lendId) {
+        QueryWrapper<LendItem> lendItemQueryWrapper = new QueryWrapper<>();
+        lendItemQueryWrapper
+                .eq("lend_id", lendId);
+
+        return baseMapper.selectList(lendItemQueryWrapper);
+
+    }
+
     /**
      * 根据流水号获取投资记录
      * @param lendItemNo

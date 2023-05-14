@@ -56,7 +56,7 @@ public class BorrowerServiceImpl extends ServiceImpl<BorrowerMapper, Borrower> i
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void saveBorrowerVOByUserId(BorrowerVO borrowerVO, long userId) {
+    public void saveBorrowerVOByUserId(BorrowerVO borrowerVO, Long userId) {
         UserInfo userInfo = userInfoMapper.selectById(userId);
         Borrower borrower = new Borrower();
         BeanUtils.copyProperties(borrowerVO,borrower);

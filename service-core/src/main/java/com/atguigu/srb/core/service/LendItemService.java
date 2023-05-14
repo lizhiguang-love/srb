@@ -22,4 +22,5 @@ public interface LendItemService extends IService<LendItem> {
 
     List<LendItem> selectByLendId(Long lendId, Integer status);
 
+    List<LendItem> selectByLendId(Long lendId);
 }

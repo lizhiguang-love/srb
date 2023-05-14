@@ -6,7 +6,9 @@ import com.atguigu.srb.core.enums.UserBindEnum;
 import com.atguigu.srb.core.hfb.FormHelper;
 import com.atguigu.srb.core.hfb.HfbConst;
 import com.atguigu.srb.core.hfb.RequestHelper;
+import com.atguigu.srb.core.mapper.UserAccountMapper;
 import com.atguigu.srb.core.mapper.UserInfoMapper;
+import com.atguigu.srb.core.pojo.entity.UserAccount;
 import com.atguigu.srb.core.pojo.entity.UserBind;
 import com.atguigu.srb.core.mapper.UserBindMapper;
 import com.atguigu.srb.core.pojo.entity.UserInfo;
@@ -19,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -37,6 +40,8 @@ public class UserBindServiceImpl extends ServiceImpl<UserBindMapper, UserBind> i
     private UserBindMapper userBindMapper;
     @Resource
     private UserInfoMapper userInfoMapper;
+    @Resource
+    private UserAccountMapper accountMapper;
     @Transactional(rollbackFor = Exception.class)
     @Override
     public String commitBindUser(UserBindVO userBindVO, Long userId) {
@@ -103,6 +108,17 @@ public class UserBindServiceImpl extends ServiceImpl<UserBindMapper, UserBind> i
         userInfo.setIdCard(userBind.getIdCard());
         userInfo.setBindStatus(UserBindEnum.BIND_OK.getStatus());
         userInfoMapper.updateById(userInfo);
+        //在user_account表中新增用户信息
+        QueryWrapper<UserAccount> accountQueryWrapper = new QueryWrapper<>();
+        accountQueryWrapper.eq("user_id",userId);
+        UserAccount userAccount = accountMapper.selectOne(accountQueryWrapper);
+        if (userAccount == null){
+            UserAccount account = new UserAccount();
+            account.setUserId(Long.valueOf(userId));
+            account.setAmount(new BigDecimal(0));
+            account.setFreezeAmount(new BigDecimal(0));
+            accountMapper.insert(account);
+        }
     }
 
     @Override

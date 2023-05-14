@@ -13,6 +13,7 @@ import com.atguigu.srb.core.pojo.entity.UserLoginRecord;
 import com.atguigu.srb.core.pojo.query.UserInfoQuery;
 import com.atguigu.srb.core.pojo.vo.LoginVO;
 import com.atguigu.srb.core.pojo.vo.RegisterVO;
+import com.atguigu.srb.core.pojo.vo.UserIndexVO;
 import com.atguigu.srb.core.pojo.vo.UserInfoVO;
 import com.atguigu.srb.core.service.UserInfoService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -23,7 +24,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -53,12 +53,6 @@ public class UserInfoServiceImpl extends ServiceImpl<UserInfoMapper, UserInfo> i
     @Resource
     private UserLoginRecordMapper userLoginRecordMapper;
 
-    @Resource(name = "threadPoolTaskExecutor")
-    private ThreadPoolTaskExecutor threadPoolTaskExecutor;
-
-    @Resource
-    private RedisTemplate redisTemplate;
-
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -86,18 +80,6 @@ public class UserInfoServiceImpl extends ServiceImpl<UserInfoMapper, UserInfo> i
 
     @Override
     public UserInfoVO login(LoginVO loginVO,String ip) {
-        String uuid = UUID.randomUUID().toString();
-        ValueOperations<String,String> ops = redisTemplate.opsForValue();
-        Boolean lock = ops.setIfAbsent("lock", uuid, 5, TimeUnit.SECONDS);
-
-        if (lock){
-            String lockValue = ops.get("lock");
-            String script = "if redis.call(\"get\",KEYS[1]) == ARGV[1] then\n" +
-                    "    return redis.call(\"del\",KEYS[1])\n" +
-                    "else\n" +
-                    "    return 0\n" +
-                    "end";
-            redisTemplate.execute(new DefaultRedisScript<Long>(script,Long.class), Arrays.asList("lock"),lockValue);
             String password = loginVO.getPassword();
             String mobile = loginVO.getMobile();
             Integer userType = loginVO.getUserType();
@@ -129,11 +111,6 @@ public class UserInfoServiceImpl extends ServiceImpl<UserInfoMapper, UserInfo> i
             return userInfoVO;
         }
 
-
-
-        return null;
-    }
-//    @Async("threadPoolTaskExecutor")
 
 
     @Override
@@ -174,10 +151,47 @@ public class UserInfoServiceImpl extends ServiceImpl<UserInfoMapper, UserInfo> i
         return count>0;
     }
 
-    @Override
-    public List<UserInfo> selectUser(int pageSize, int pageNum) {
-//        List<UserInfo> userInfoList = userInfoMapper.selectUser(2, 2);
 
-        return null;
+
+    @Override
+    public UserIndexVO getIndexUserInfo(Long userId) {
+        //用户信息
+        UserInfo userInfo = baseMapper.selectById(userId);
+
+        //账户信息
+        QueryWrapper<UserAccount> userAccountQueryWrapper = new QueryWrapper<>();
+        userAccountQueryWrapper.eq("user_id", userId);
+        UserAccount userAccount = userAccountMapper.selectOne(userAccountQueryWrapper);
+
+        //登录日志
+        QueryWrapper<UserLoginRecord> userLoginRecordQueryWrapper = new QueryWrapper<>();
+        userLoginRecordQueryWrapper
+                .eq("user_id", userId)
+                .orderByDesc("id")
+                .last("limit 1");
+        UserLoginRecord userLoginRecord = userLoginRecordMapper.selectOne(userLoginRecordQueryWrapper);
+
+        //组装结果对象
+        UserIndexVO userIndexVO = new UserIndexVO();
+        userIndexVO.setUserId(userId);
+        userIndexVO.setUserType(userInfo.getUserType());
+        userIndexVO.setName(userInfo.getName());
+        userIndexVO.setNickName(userInfo.getNickName());
+        userIndexVO.setHeadImg(userInfo.getHeadImg());
+        userIndexVO.setBindStatus(userInfo.getBindStatus());
+        userIndexVO.setAmount(userAccount.getAmount());
+        userIndexVO.setFreezeAmount(userAccount.getFreezeAmount());
+        userIndexVO.setLastLoginTime(userLoginRecord.getCreateTime());
+
+        return userIndexVO;
+    }
+
+    @Override
+    public String getMobileByBindCode(String bindCode) {
+
+        QueryWrapper<UserInfo> userInfoQueryWrapper = new QueryWrapper<>();
+        userInfoQueryWrapper.eq("bind_code", bindCode);
+        UserInfo userInfo = baseMapper.selectOne(userInfoQueryWrapper);
+        return userInfo.getMobile();
     }
 }

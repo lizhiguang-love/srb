@@ -7,6 +7,8 @@ import com.atguigu.srb.core.mapper.TransFlowMapper;
 import com.atguigu.srb.core.pojo.entity.UserInfo;
 import com.atguigu.srb.core.service.TransFlowService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.stereotype.Service;
 
@@ -50,5 +52,13 @@ public class TransFlowServiceImpl extends ServiceImpl<TransFlowMapper, TransFlow
         Integer count = baseMapper.selectCount(transFlowQueryWrapper);
         return count > 0;
 
+    }
+
+    @Override
+    public IPage<TransFlow> selectByUserId(Long userId) {
+        Page<TransFlow> page = new Page<>(1, 100);
+        QueryWrapper<TransFlow> transFlowQueryWrapper = new QueryWrapper<>();
+        transFlowQueryWrapper.eq("user_id", userId).orderByDesc("id");
+        return baseMapper.selectPage(page,transFlowQueryWrapper);
     }
 }

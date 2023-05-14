@@ -1,5 +1,10 @@
 package com.atguigu.srb.sms.service.impl;
 
+import com.aliyun.auth.credentials.Credential;
+import com.aliyun.auth.credentials.provider.StaticCredentialProvider;
+import com.aliyun.sdk.service.dysmsapi20170525.AsyncClient;
+import com.aliyun.sdk.service.dysmsapi20170525.models.SendSmsRequest;
+import com.aliyun.sdk.service.dysmsapi20170525.models.SendSmsResponse;
 import com.aliyuncs.CommonRequest;
 import com.aliyuncs.CommonResponse;
 import com.aliyuncs.DefaultAcsClient;
@@ -14,11 +19,14 @@ import com.atguigu.common.result.ResponseEnum;
 import com.atguigu.srb.sms.service.SmsService;
 import com.atguigu.srb.sms.util.SmsProperties;
 import com.google.gson.Gson;
+import darabonba.core.client.ClientOverrideConfiguration;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+
 @Service
 @Slf4j
 public class SmsServiceImpl implements SmsService {
@@ -30,6 +38,7 @@ public class SmsServiceImpl implements SmsService {
                 SmsProperties.KEY_ID,
                 SmsProperties.KEY_SECRET);
         IAcsClient client = new DefaultAcsClient(profile);
+
         //创建远程连接的请求参数
         CommonRequest request = new CommonRequest();
         request.setSysMethod(MethodType.POST);
@@ -43,6 +52,7 @@ public class SmsServiceImpl implements SmsService {
         Gson gson = new Gson();
         String jsonParam = gson.toJson(param);
         request.putQueryParameter("TemplateParam", jsonParam);
+        System.out.println("已经建立连接了......");
         try {
             //使用客户端对象携带请求参数向远程阿里云服务器发起远程调用，并得到响应结果
             CommonResponse response = client.getCommonResponse(request);
@@ -72,5 +82,56 @@ public class SmsServiceImpl implements SmsService {
             throw new BusinessException(ResponseEnum.ALIYUN_SMS_ERROR, e);
 //            e.printStackTrace();
         }
+    }
+    @Override
+    public void sendMessage(String mobile, String templateCode, Map<String, Object> param){
+        StaticCredentialProvider provider = StaticCredentialProvider.create(Credential.builder()
+                .accessKeyId(SmsProperties.KEY_ID)
+                .accessKeySecret(SmsProperties.KEY_SECRET)
+                .build());
+
+        // Configure the Client
+        AsyncClient client = AsyncClient.builder()
+                .region(SmsProperties.REGION_Id) // Region ID
+                //.httpClient(httpClient) // Use the configured HttpClient, otherwise use the default HttpClient (Apache HttpClient)
+                .credentialsProvider(provider)
+                //.serviceConfiguration(Configuration.create()) // Service-level configuration
+                // Client-level configuration rewrite, can set Endpoint, Http request parameters, etc.
+                .overrideConfiguration(
+                        ClientOverrideConfiguration.create()
+                                .setEndpointOverride("dysmsapi.aliyuncs.com")
+                        //.setConnectTimeout(Duration.ofSeconds(30))
+                )
+                .build();
+
+        // Parameter settings for API request
+        Gson gson = new Gson();
+        String jsonParam = gson.toJson(param);
+        System.out.println("param--->"+jsonParam);
+        SendSmsRequest sendSmsRequest = SendSmsRequest.builder()
+                .phoneNumbers(mobile)
+                .signName(SmsProperties.SIGN_NAME)
+                .templateCode(templateCode)
+                .templateParam(jsonParam)
+                // Request-level configuration rewrite, can set Http request parameters, etc.
+                // .requestConfiguration(RequestConfiguration.create().setHttpHeaders(new HttpHeaders()))
+                .build();
+
+        // Asynchronously get the return value of the API request
+        CompletableFuture<SendSmsResponse> response = client.sendSms(sendSmsRequest);
+        // Synchronously get the return value of the API request
+        SendSmsResponse resp = response.join();
+        System.out.println("成功发送短信。。。。。。。。。。");
+        System.out.println(new Gson().toJson(resp));
+        // Asynchronous processing of return values
+        /*response.thenAccept(resp -> {
+            System.out.println(new Gson().toJson(resp));
+        }).exceptionally(throwable -> { // Handling exceptions
+            System.out.println(throwable.getMessage());
+            return null;
+        });*/
+
+        // Finally, close the client
+        client.close();
     }
 }
